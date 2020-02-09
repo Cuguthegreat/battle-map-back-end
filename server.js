@@ -9,7 +9,7 @@ var app = express();
 app.use(bodyParser.json());
 var db;
 
-var uri = "mongodb+srv:dbUser:dbUserPassword@cluster0-udc2e.mongodb.net/test";
+var uri = "mongodb+srv://dbUser:dbUserPassword@cluster0-udc2e.mongodb.net/test";
 
 mongodb.MongoClient.connect(uri || "mongodb://localhost:27017/test", function (err, client) {
   if (err) {
