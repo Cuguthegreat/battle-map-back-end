@@ -32,6 +32,8 @@ function handleError(res, reason, message, code) {
   res.status(code || 500).json({"error": message});
 }
 
+app.use(cors());
+
 app.get("/api/entities", function(req, res) {
   db.collection(ENTITIES).find({}).toArray(function(err, docs) {
     if (err) {
@@ -42,7 +44,7 @@ app.get("/api/entities", function(req, res) {
   });
 });
 
-app.post("/api/entities", cors(), function(req, res) {
+app.post("/api/entities", function(req, res) {
   var newEntity = req.body;
   newEntity.createDate = new Date();
 
