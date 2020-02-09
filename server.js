@@ -9,7 +9,9 @@ var app = express();
 app.use(bodyParser.json());
 var db;
 
-mongodb.MongoClient.connect(process.env.MONGODB_URI || "mongodb://localhost:27017/test", function (err, client) {
+var uri = "mongodb+srv:dbUser:dbUserPassword@cluster0-udc2e.mongodb.net/test";
+
+mongodb.MongoClient.connect(uri || "mongodb://localhost:27017/test", function (err, client) {
   if (err) {
     console.log(err);
     process.exit(1);
@@ -70,7 +72,7 @@ app.put("/api/entities/:id", function(req, res) {
   var updateDoc = req.body;
   delete updateDoc._id;
 
-  db.collection(ENTITIES).updateOne({_id: new ObjectID(req.params.id)}, updateDoc, function(err, doc) {
+  db.collection(ENTITIES).updateOne({_id: new ObjectID(req.params.id)}, updateDoc, function(err) {
     if (err) {
       handleError(res, err.message, "Failed to update entity");
     } else {
@@ -81,7 +83,7 @@ app.put("/api/entities/:id", function(req, res) {
 });
 
 app.delete("/api/entities/:id", function(req, res) {
-  db.collection(ENTITIES).deleteOne({_id: new ObjectID(req.params.id)}, function(err, result) {
+  db.collection(ENTITIES).deleteOne({_id: new ObjectID(req.params.id)}, function(err) {
     if (err) {
       handleError(res, err.message, "Failed to delete entity");
     } else {
