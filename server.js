@@ -45,6 +45,9 @@ app.post("/api/entities", function(req, res) {
   var newEntity = req.body;
   newEntity.createDate = new Date();
 
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+
   if (!req.body.name) {
     handleError(res, "Invalid request", "Must provide a name.", 400);
   } else {
