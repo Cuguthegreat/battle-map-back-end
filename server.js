@@ -2,6 +2,7 @@ var express = require("express");
 var bodyParser = require("body-parser");
 var mongodb = require("mongodb");
 var ObjectID = mongodb.ObjectID;
+const cors = require('cors');
 
 var ENTITIES = "entities";
 
@@ -41,12 +42,9 @@ app.get("/api/entities", function(req, res) {
   });
 });
 
-app.post("/api/entities", function(req, res) {
+app.post("/api/entities", cors(), function(req, res) {
   var newEntity = req.body;
   newEntity.createDate = new Date();
-
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
 
   if (!req.body.name) {
     handleError(res, "Invalid request", "Must provide a name.", 400);
