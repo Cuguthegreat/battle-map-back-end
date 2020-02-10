@@ -38,13 +38,8 @@ mongodb.MongoClient.connect(uri || "mongodb://localhost:27017/test", function (e
     changeStream.on('change', function(change) {
       console.log('COLLECTION CHANGED');
 
-      collection.find({}, (err, data) => {
-        if (err) throw err;
-
-        if (data) {
-          socket.emit('update', data);
-        }
-      });
+      console.log(change)
+      socket.emit('update', change);
     });
   });
 });
