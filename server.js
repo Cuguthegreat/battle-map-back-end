@@ -26,10 +26,11 @@ mongodb.MongoClient.connect(uri || "mongodb://localhost:27017/test", function (e
   var server = app.listen(process.env.PORT || 8080, function () {
     var port = server.address().port;
     console.log("App now running on port", port);
+
+    server.listen(3000);
   });
 
   const io = require('socket.io').listen(server);
-  server.listen(3000);
 
   const changeStream = client.db('test').collection('entities').watch();
 
