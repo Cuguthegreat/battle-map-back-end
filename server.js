@@ -8,6 +8,7 @@ var ENTITIES = "entities";
 
 var app = express();
 app.use(bodyParser.json());
+app.use(cors());
 var db;
 var collection;
 
@@ -58,14 +59,10 @@ mongodb.MongoClient.connect(uri || "mongodb://localhost:27017/test", function (e
   });
 });
 
-
-
 function handleError(res, reason, message, code) {
   console.log("ERROR: " + reason);
   res.status(code || 500).json({"error": message});
 }
-
-app.use(cors());
 
 app.get("/api/entities", function(req, res) {
   db.collection(ENTITIES).find({}).toArray(function(err, docs) {
