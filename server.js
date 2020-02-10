@@ -14,8 +14,9 @@ var collection;
 
 var uri = "mongodb+srv://dbUser:dbUserPassword@cluster0-udc2e.mongodb.net/test";
 
-const server = app.listen(3000);
+const server = https.createServer(sslOptions, app);
 const io = require('socket.io').listen(server);
+server.listen(3000);
 
 mongodb.MongoClient.connect(uri || "mongodb://localhost:27017/test", function (err, client) {
   if (err) {
