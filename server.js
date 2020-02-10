@@ -14,10 +14,6 @@ var collection;
 
 var uri = "mongodb+srv://dbUser:dbUserPassword@cluster0-udc2e.mongodb.net/test";
 
-const server = https.createServer(sslOptions, app);
-const io = require('socket.io').listen(server);
-server.listen(3000);
-
 mongodb.MongoClient.connect(uri || "mongodb://localhost:27017/test", function (err, client) {
   if (err) {
     console.log(err);
@@ -31,6 +27,9 @@ mongodb.MongoClient.connect(uri || "mongodb://localhost:27017/test", function (e
     var port = server.address().port;
     console.log("App now running on port", port);
   });
+
+  const io = require('socket.io').listen(server);
+  server.listen(3000);
 
   const changeStream = client.db('test').collection('entities').watch();
 
