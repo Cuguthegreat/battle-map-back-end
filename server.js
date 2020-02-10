@@ -32,7 +32,6 @@ mongodb.MongoClient.connect(uri || "mongodb://localhost:27017/test", function (e
   }
 
   db = client.db();
-  collection = db.stock;
   console.log("Database connection ready");
 
   var server = app.listen(process.env.PORT || 8080, function () {
@@ -40,7 +39,7 @@ mongodb.MongoClient.connect(uri || "mongodb://localhost:27017/test", function (e
     console.log("App now running on port", port);
   });
 
-  const changeStream = collection.watch();
+  const changeStream = client.db('test').collection('entities').watch();
 
   io.on('connection', function (socket) {
     console.log('Connection!');
