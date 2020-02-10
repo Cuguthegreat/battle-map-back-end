@@ -9,8 +9,21 @@ var ENTITIES = "entities";
 var app = express();
 app.use(bodyParser.json());
 var db;
+var collection;
 
 var uri = "mongodb+srv://dbUser:dbUserPassword@cluster0-udc2e.mongodb.net/test";
+
+const server = require('http').createServer();
+
+const io = require('socket.io')(server, {
+  path: '/test',
+  serveClient: false,
+  pingInterval: 10000,
+  pingTimeout: 5000,
+  cookie: false
+});
+
+server.listen(3000);
 
 mongodb.MongoClient.connect(uri || "mongodb://localhost:27017/test", function (err, client) {
   if (err) {
@@ -19,13 +32,34 @@ mongodb.MongoClient.connect(uri || "mongodb://localhost:27017/test", function (e
   }
 
   db = client.db();
+  collection = db.stock;
   console.log("Database connection ready");
 
   var server = app.listen(process.env.PORT || 8080, function () {
     var port = server.address().port;
     console.log("App now running on port", port);
   });
+
+  const changeStream = collection.watch();
+
+  io.on('connection', function (socket) {
+    console.log('Connection!');
+
+    changeStream.on('change', function(change) {
+      console.log('COLLECTION CHANGED');
+
+      collection.find({}, (err, data) => {
+        if (err) throw err;
+
+        if (data) {
+          socket.emit('update', data);
+        }
+      });
+    });
+  });
 });
+
+
 
 function handleError(res, reason, message, code) {
   console.log("ERROR: " + reason);
