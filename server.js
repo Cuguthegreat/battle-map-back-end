@@ -51,7 +51,7 @@ app.post("/api/entities", function(req, res) {
   if (!req.body.name) {
     handleError(res, "Invalid request", "Must provide a name.", 400);
   } else {
-    db.collection(ENTITIES).insertOne(newContact, function(err, doc) {
+    db.collection(ENTITIES).insertOne(newEntity, function(err, doc) {
       if (err) {
         handleError(res, err.message, "Failed to create new entity.");
       } else {
