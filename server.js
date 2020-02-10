@@ -14,17 +14,8 @@ var collection;
 
 var uri = "mongodb+srv://dbUser:dbUserPassword@cluster0-udc2e.mongodb.net/test";
 
-const server = require('http').createServer();
-
-const io = require('socket.io')(server, {
-  path: '/test',
-  serveClient: false,
-  pingInterval: 10000,
-  pingTimeout: 5000,
-  cookie: false
-});
-
-server.listen(3000);
+const server = app.listen(3000);
+const io = require('socket.io').listen(server);
 
 mongodb.MongoClient.connect(uri || "mongodb://localhost:27017/test", function (err, client) {
   if (err) {
