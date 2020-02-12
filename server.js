@@ -157,3 +157,13 @@ app.put("/api/squares/:id", function(req, res) {
     }
   });
 });
+
+app.delete("/api/squares/:id", function(req, res) {
+  db.collection(SQUARES).deleteOne({_id: new ObjectID(req.params.id)}, function(err) {
+    if (err) {
+      handleError(res, err.message, "Failed to delete entity");
+    } else {
+      res.status(200).json(req.params.id);
+    }
+  });
+});
