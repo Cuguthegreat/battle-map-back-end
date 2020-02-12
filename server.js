@@ -4,7 +4,8 @@ var mongodb = require("mongodb");
 var ObjectID = mongodb.ObjectID;
 const cors = require('cors');
 
-var ENTITIES = "entities";
+var ENTITIES = 'entities';
+var SQUARES = 'squares';
 
 var app = express();
 app.use(bodyParser.json());
@@ -30,15 +31,21 @@ mongodb.MongoClient.connect(uri || "mongodb://localhost:27017/test", function (e
 
   const io = require('socket.io').listen(server);
 
-  const changeStream = client.db('test').collection('entities').watch();
+  const entitiesChangeStream = client.db('test').collection('entities').watch();
+  const squaresChangeStream = client.db('test').collection('squares').watch();
 
   io.on('connection', function (socket) {
     console.log('Connection!');
 
-    changeStream.on('change', function(change) {
-      console.log('COLLECTION CHANGED');
+    entitiesChangeStream.on('change', function(change) {
+      console.log('Entities changed', change);
 
-      console.log(change)
+      socket.emit('update', change);
+    });
+
+    squaresChangeStream.on('change', function(change) {
+      console.log('Squares changed', change);
+
       socket.emit('update', change);
     });
   });
@@ -52,7 +59,7 @@ function handleError(res, reason, message, code) {
 app.get("/api/entities", function(req, res) {
   db.collection(ENTITIES).find({}).toArray(function(err, docs) {
     if (err) {
-      handleError(res, err.message, "Failed to get entities.");
+      handleError(res, err.message, "Failed to fetch entities.");
     } else {
       res.status(200).json(docs);
     }
@@ -106,6 +113,47 @@ app.delete("/api/entities/:id", function(req, res) {
       handleError(res, err.message, "Failed to delete entity");
     } else {
       res.status(200).json(req.params.id);
+    }
+  });
+});
+
+app.get("/api/squares", function(req, res) {
+  db.collection(SQUARES).find({}).toArray(function(err, docs) {
+    if (err) {
+      handleError(res, err.message, "Failed to fetch squares.");
+    } else {
+      res.status(200).json(docs);
+    }
+  });
+});
+
+app.post("/api/squares", function(req, res) {
+  var newSquare = req.body;
+  newSquare.createDate = new Date();
+
+  if (!req.body) {
+    handleError(res, "Invalid request", "Must provide data.", 400);
+  } else {
+    db.collection(SQUARES).insertOne(newSquare, function(err, doc) {
+      if (err) {
+        handleError(res, err.message, "Failed to create new square.");
+      } else {
+        res.status(201).json(doc.ops[0]);
+      }
+    });
+  }
+});
+
+app.put("/api/squares/:id", function(req, res) {
+  var updateDoc = req.body;
+  delete updateDoc._id;
+
+  db.collection(SQUARES).updateOne({_id: new ObjectID(req.params.id)}, updateDoc, function(err) {
+    if (err) {
+      handleError(res, err.message, "Failed to update entity");
+    } else {
+      updateDoc._id = req.params.id;
+      res.status(200).json(updateDoc);
     }
   });
 });
