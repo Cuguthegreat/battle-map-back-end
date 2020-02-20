@@ -65,7 +65,7 @@ console.log(database)
 const dbDev = connectWithDatabase(uriDev);
 const dbTest = connectWithDatabase(uriTest);
 
-console('-----')
+console.log('-----')
 console.log(dbDev)
 console.log(dbTest)
 console.log('------')
