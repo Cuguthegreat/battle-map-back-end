@@ -16,6 +16,11 @@ app.use(cors());
 const uriTest = "mongodb+srv://dbUser:dbUserPassword@cluster0-udc2e.mongodb.net/test";
 const uriDev = "mongodb+srv://dbUser:dbUserPassword@cluster0-udc2e.mongodb.net/dev";
 
+const server = app.listen(process.env.PORT || 8080, function () {
+    const port = server.address().port;
+    console.log("App now running on port", port);
+});
+
 const setupSocketIO = ({io, entitiesChangeStream, squaresChangeStream}) => io.on('connection', socket => {
     console.log('Connection!');
 
@@ -38,18 +43,15 @@ const connectWithDatabase = uri => mongodb.MongoClient.connect(uri, (err, client
         process.exit(1);
     }
 
-    const database = client.db();
-    console.log("Database connection ready");
+    const env = uri.split('/').pop();
 
-    const server = app.listen(process.env.PORT || 8080, function () {
-        const port = server.address().port;
-        console.log("App now running on port", port);
-    });
+    const database = client.db();
+    console.log(`Database connection ${env} ready`);
 
     setupSocketIO({
         io: require('socket.io').listen(server),
-        entitiesChangeStream: client.db('test').collection('entities').watch(),
-        squaresChangeStream: client.db('test').collection('squares').watch()
+        entitiesChangeStream: client.db(env).collection('entities').watch(),
+        squaresChangeStream: client.db(env).collection('squares').watch()
     });
 
     return database;
