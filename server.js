@@ -46,7 +46,7 @@ const connectWithDatabase = uri => mongodb.MongoClient.connect(uri, (err, client
     const env = uri.split('/').pop();
 
     const database = client.db();
-    console.log(`Database connection ${env} ready`);
+    console.log(`Database connection on ${env} ready`);
 
     setupSocketIO({
         io: require('socket.io').listen(server),
