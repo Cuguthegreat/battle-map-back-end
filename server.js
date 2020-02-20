@@ -37,9 +37,10 @@ const setupSocketIO = ({io, entitiesChangeStream, squaresChangeStream}) => io.on
     });
 });
 
-const connectWithDatabase = uri => {
-    let database;
+let dbDev;
+let dbTest;
 
+const connectWithDatabase = uri => {
     mongodb.MongoClient.connect(uri, (err, client) => {
         if (err) {
             console.log(err);
@@ -48,8 +49,10 @@ const connectWithDatabase = uri => {
 
         const env = uri.split('/').pop();
 
+        let database = env === 'test' ? dbTest : dbDev ;
+
         database = client.db();
-        console.log(database)
+
         console.log(`Database connection on ${env} ready`);
 
         setupSocketIO({
@@ -58,17 +61,10 @@ const connectWithDatabase = uri => {
             squaresChangeStream: client.db(env).collection('squares').watch()
         });
     });
-console.log(database)
-    return database;
 };
 
-const dbDev = connectWithDatabase(uriDev);
-const dbTest = connectWithDatabase(uriTest);
-
-console.log('-----')
-console.log(dbDev)
-console.log(dbTest)
-console.log('------')
+connectWithDatabase(uriDev);
+connectWithDatabase(uriTest);
 
 const handleError = (res, reason, message, code) => {
     console.log("ERROR: " + reason);
