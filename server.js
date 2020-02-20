@@ -49,9 +49,13 @@ const connectWithDatabase = uri => {
 
         const env = uri.split('/').pop();
 
-        let database = env === 'test' ? dbTest : dbDev ;
+        if (env === 'dev') {
+            dbDev = client.db();
+        } else {
+            dbTest = client.db();
+        }
 
-        database = client.db();
+        console.log(dbDev, dbTest)
 
         console.log(`Database connection on ${env} ready`);
 
@@ -73,7 +77,7 @@ const handleError = (res, reason, message, code) => {
 
 app.get("/api/entities", (req, res) => {
     const queryObject = url.parse(req.url, true).query;
-
+console.log(queryObject, queryObject.experimental)
     const db = queryObject.experimental ? dbDev : dbTest;
 
     db.collection(ENTITIES).find({}).toArray((err, docs) => {
