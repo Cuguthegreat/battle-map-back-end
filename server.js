@@ -65,6 +65,11 @@ console.log(database)
 const dbDev = connectWithDatabase(uriDev);
 const dbTest = connectWithDatabase(uriTest);
 
+console('-----')
+console.log(dbDev)
+console.log(dbTest)
+console.log('------')
+
 const handleError = (res, reason, message, code) => {
     console.log("ERROR: " + reason);
     res.status(code || 500).json({"error": message});
