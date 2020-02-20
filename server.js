@@ -1,163 +1,173 @@
-var express = require("express");
-var bodyParser = require("body-parser");
-var mongodb = require("mongodb");
-var ObjectID = mongodb.ObjectID;
+const express = require("express");
+const bodyParser = require("body-parser");
+const mongodb = require("mongodb");
+const ObjectID = mongodb.ObjectID;
 const cors = require('cors');
 
-var ENTITIES = 'entities';
-var SQUARES = 'squares';
+const url = require('url');
 
-var app = express();
+const ENTITIES = 'entities';
+const SQUARES = 'squares';
+
+const app = express();
 app.use(bodyParser.json());
 app.use(cors());
-var db;
-var collection;
 
-var uri = "mongodb+srv://dbUser:dbUserPassword@cluster0-udc2e.mongodb.net/test";
+const uriTest = "mongodb+srv://dbUser:dbUserPassword@cluster0-udc2e.mongodb.net/test";
+const uriDev = "mongodb+srv://dbUser:dbUserPassword@cluster0-udc2e.mongodb.net/dev";
 
-mongodb.MongoClient.connect(uri || "mongodb://localhost:27017/test", function (err, client) {
-  if (err) {
-    console.log(err);
-    process.exit(1);
-  }
-
-  db = client.db();
-  console.log("Database connection ready");
-
-  var server = app.listen(process.env.PORT || 8080, function () {
-    var port = server.address().port;
-    console.log("App now running on port", port);
-  });
-
-  const io = require('socket.io').listen(server);
-
-  const entitiesChangeStream = client.db('test').collection('entities').watch();
-  const squaresChangeStream = client.db('test').collection('squares').watch();
-
-  io.on('connection', function (socket) {
+const setupSocketIO = ({io, entitiesChangeStream, squaresChangeStream}) => io.on('connection', socket => {
     console.log('Connection!');
 
-    entitiesChangeStream.on('change', function(change) {
-      console.log('Entities changed', change);
+    entitiesChangeStream.on('change', change => {
+        console.log('Entities changed', change);
 
-      socket.emit('update', change);
+        socket.emit('update', change);
     });
 
-    squaresChangeStream.on('change', function(change) {
-      console.log('Squares changed', change);
+    squaresChangeStream.on('change', change => {
+        console.log('Squares changed', change);
 
-      socket.emit('update', change);
+        socket.emit('update', change);
     });
-  });
 });
 
-function handleError(res, reason, message, code) {
-  console.log("ERROR: " + reason);
-  res.status(code || 500).json({"error": message});
-}
-
-app.get("/api/entities", function(req, res) {
-  db.collection(ENTITIES).find({}).toArray(function(err, docs) {
+const connectWithDatabase = uri => mongodb.MongoClient.connect(uri, (err, client) => {
     if (err) {
-      handleError(res, err.message, "Failed to fetch entities.");
-    } else {
-      res.status(200).json(docs);
+        console.log(err);
+        process.exit(1);
     }
-  });
-});
 
-app.post("/api/entities", function(req, res) {
-  var newEntity = req.body;
-  newEntity.createDate = new Date();
+    const database = client.db();
+    console.log("Database connection ready");
 
-  if (!req.body.name) {
-    handleError(res, "Invalid request", "Must provide a name.", 400);
-  } else {
-    db.collection(ENTITIES).insertOne(newEntity, function(err, doc) {
-      if (err) {
-        handleError(res, err.message, "Failed to create new entity.");
-      } else {
-        res.status(201).json(doc.ops[0]);
-      }
+    const server = app.listen(process.env.PORT || 8080, function () {
+        const port = server.address().port;
+        console.log("App now running on port", port);
     });
-  }
-});
 
-app.get("/api/entities/:id", function(req, res) {
-  db.collection(ENTITIES).findOne({ _id: new ObjectID(req.params.id) }, function(err, doc) {
-    if (err) {
-      handleError(res, err.message, "Failed to get entity");
-    } else {
-      res.status(200).json(doc);
-    }
-  });
-});
-
-app.put("/api/entities/:id", function(req, res) {
-  var updateDoc = req.body;
-  delete updateDoc._id;
-
-  db.collection(ENTITIES).updateOne({_id: new ObjectID(req.params.id)}, updateDoc, function(err) {
-    if (err) {
-      handleError(res, err.message, "Failed to update entity");
-    } else {
-      updateDoc._id = req.params.id;
-      res.status(200).json(updateDoc);
-    }
-  });
-});
-
-app.delete("/api/entities/:id", function(req, res) {
-  db.collection(ENTITIES).deleteOne({_id: new ObjectID(req.params.id)}, function(err) {
-    if (err) {
-      handleError(res, err.message, "Failed to delete entity");
-    } else {
-      res.status(200).json(req.params.id);
-    }
-  });
-});
-
-app.get("/api/squares", function(req, res) {
-  db.collection(SQUARES).find({}).toArray(function(err, docs) {
-    if (err) {
-      handleError(res, err.message, "Failed to fetch squares.");
-    } else {
-      res.status(200).json(docs);
-    }
-  });
-});
-
-app.post("/api/squares", function(req, res) {
-  var newSquare = req.body;
-  newSquare.createDate = new Date();
-
-  if (!req.body) {
-    handleError(res, "Invalid request", "Must provide data.", 400);
-  } else {
-    db.collection(SQUARES).insertOne(newSquare, function(err, doc) {
-      if (err) {
-        handleError(res, err.message, "Failed to create new square.");
-      } else {
-        res.status(201).json(doc.ops[0]);
-      }
+    setupSocketIO({
+        io: require('socket.io').listen(server),
+        entitiesChangeStream: client.db('test').collection('entities').watch(),
+        squaresChangeStream: client.db('test').collection('squares').watch()
     });
-  }
+
+    return database;
 });
 
-app.put("/api/squares/:id", function(req, res) {
-  var updateDoc = req.body;
-  delete updateDoc._id;
+const dbDev = connectWithDatabase(uriDev);
+const dbTest = connectWithDatabase(uriTest);
 
-  db.collection(SQUARES).updateOne({_id: new ObjectID(req.params.id)}, updateDoc, function(err) {
-    if (err) {
-      handleError(res, err.message, "Failed to update entity");
+const handleError = (res, reason, message, code) => {
+    console.log("ERROR: " + reason);
+    res.status(code || 500).json({"error": message});
+};
+
+app.get("/api/entities", (req, res) => {
+    const queryObject = url.parse(req.url, true).query;
+
+    const db = queryObject.experimental ? dbDev : dbTest;
+
+    db.collection(ENTITIES).find({}).toArray((err, docs) => {
+        if (err) {
+            handleError(res, err.message, "Failed to fetch entities.");
+        } else {
+            res.status(200).json(docs);
+        }
+    });
+});
+
+app.post("/api/entities", (req, res) => {
+    const newEntity = req.body;
+    newEntity.createDate = new Date();
+
+    if (!req.body.name) {
+        handleError(res, "Invalid request", "Must provide a name.", 400);
     } else {
-      updateDoc._id = req.params.id;
-      res.status(200).json(updateDoc);
+        dbTest.collection(ENTITIES).insertOne(newEntity, (err, doc) => {
+            if (err) {
+                handleError(res, err.message, "Failed to create new entity.");
+            } else {
+                res.status(201).json(doc.ops[0]);
+            }
+        });
     }
-  });
 });
 
+app.get("/api/entities/:id", (req, res) => {
+    dbTest.collection(ENTITIES).findOne({_id: new ObjectID(req.params.id)}, (err, doc) => {
+        if (err) {
+            handleError(res, err.message, "Failed to get entity");
+        } else {
+            res.status(200).json(doc);
+        }
+    });
+});
+
+app.put("/api/entities/:id", (req, res) => {
+    const updateDoc = req.body;
+    delete updateDoc._id;
+
+    dbTest.collection(ENTITIES).updateOne({_id: new ObjectID(req.params.id)}, updateDoc, function (err) {
+        if (err) {
+            handleError(res, err.message, "Failed to update entity");
+        } else {
+            updateDoc._id = req.params.id;
+            res.status(200).json(updateDoc);
+        }
+    });
+});
+
+app.delete("/api/entities/:id", (req, res) => {
+    dbTest.collection(ENTITIES).deleteOne({_id: new ObjectID(req.params.id)}, function (err) {
+        if (err) {
+            handleError(res, err.message, "Failed to delete entity");
+        } else {
+            res.status(200).json(req.params.id);
+        }
+    });
+});
+
+app.get("/api/squares", function (req, res) {
+    dbTest.collection(SQUARES).find({}).toArray((err, docs) => {
+        if (err) {
+            handleError(res, err.message, "Failed to fetch squares.");
+        } else {
+            res.status(200).json(docs);
+        }
+    });
+});
+
+app.post("/api/squares", (req, res) => {
+    const newSquare = req.body;
+    newSquare.createDate = new Date();
+
+    if (!req.body) {
+        handleError(res, "Invalid request", "Must provide data.", 400);
+    } else {
+        dbTest.collection(SQUARES).insertOne(newSquare, (err, doc) => {
+            if (err) {
+                handleError(res, err.message, "Failed to create new square.");
+            } else {
+                res.status(201).json(doc.ops[0]);
+            }
+        });
+    }
+});
+
+app.put("/api/squares/:id", (req, res) => {
+    const updateDoc = req.body;
+    delete updateDoc._id;
+
+    dbTest.collection(SQUARES).updateOne({_id: new ObjectID(req.params.id)}, updateDoc, err => {
+        if (err) {
+            handleError(res, err.message, "Failed to update entity");
+        } else {
+            updateDoc._id = req.params.id;
+            res.status(200).json(updateDoc);
+        }
+    });
+});
 app.delete("/api/squares/:id", function(req, res) {
   db.collection(SQUARES).deleteOne({_id: new ObjectID(req.params.id)}, function(err) {
     if (err) {
