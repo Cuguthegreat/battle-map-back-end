@@ -37,25 +37,29 @@ const setupSocketIO = ({io, entitiesChangeStream, squaresChangeStream}) => io.on
     });
 });
 
-const connectWithDatabase = uri => mongodb.MongoClient.connect(uri, (err, client) => {
-    if (err) {
-        console.log(err);
-        process.exit(1);
-    }
+const connectWithDatabase = uri => {
+    let database;
 
-    const env = uri.split('/').pop();
+    mongodb.MongoClient.connect(uri, (err, client) => {
+        if (err) {
+            console.log(err);
+            process.exit(1);
+        }
 
-    const database = client.db();
-    console.log(`Database connection on ${env} ready`);
+        const env = uri.split('/').pop();
 
-    setupSocketIO({
-        io: require('socket.io').listen(server),
-        entitiesChangeStream: client.db(env).collection('entities').watch(),
-        squaresChangeStream: client.db(env).collection('squares').watch()
+        database = client.db();
+        console.log(`Database connection on ${env} ready`);
+
+        setupSocketIO({
+            io: require('socket.io').listen(server),
+            entitiesChangeStream: client.db(env).collection('entities').watch(),
+            squaresChangeStream: client.db(env).collection('squares').watch()
+        });
     });
 
     return database;
-});
+};
 
 const dbDev = connectWithDatabase(uriDev);
 const dbTest = connectWithDatabase(uriTest);
@@ -64,11 +68,6 @@ const handleError = (res, reason, message, code) => {
     console.log("ERROR: " + reason);
     res.status(code || 500).json({"error": message});
 };
-
-console.log(dbDev)
-console.log(dbTest)
-console.log(dbDev.collection(ENTITIES))
-console.log(dbTest.collection(ENTITIES))
 
 app.get("/api/entities", (req, res) => {
     const queryObject = url.parse(req.url, true).query;
