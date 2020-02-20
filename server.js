@@ -168,8 +168,9 @@ app.put("/api/squares/:id", (req, res) => {
         }
     });
 });
-app.delete("/api/squares/:id", function(req, res) {
-  db.collection(SQUARES).deleteOne({_id: new ObjectID(req.params.id)}, function(err) {
+
+app.delete("/api/squares/:id", (req, res) => {
+    dbTest.collection(SQUARES).deleteOne({_id: new ObjectID(req.params.id)}, function(err) {
     if (err) {
       handleError(res, err.message, "Failed to delete entity");
     } else {
