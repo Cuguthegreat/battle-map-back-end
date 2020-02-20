@@ -55,8 +55,6 @@ const connectWithDatabase = uri => {
             dbTest = client.db();
         }
 
-        console.log(dbDev, dbTest)
-
         console.log(`Database connection on ${env} ready`);
 
         setupSocketIO({
@@ -75,12 +73,10 @@ const handleError = (res, reason, message, code) => {
     res.status(code || 500).json({"error": message});
 };
 
-app.get("/api/entities", (req, res) => {
-    const queryObject = url.parse(req.url, true).query;
-console.log(queryObject, queryObject.experimental)
-    const db = queryObject.experimental ? dbDev : dbTest;
+const getDatabase = req => url.parse(req.url, true).query.experimental ? dbDev : dbTest;
 
-    db.collection(ENTITIES).find({}).toArray((err, docs) => {
+app.get("/api/entities", (req, res) => {
+    getDatabase(req).collection(ENTITIES).find({}).toArray((err, docs) => {
         if (err) {
             handleError(res, err.message, "Failed to fetch entities.");
         } else {
@@ -96,7 +92,7 @@ app.post("/api/entities", (req, res) => {
     if (!req.body.name) {
         handleError(res, "Invalid request", "Must provide a name.", 400);
     } else {
-        dbTest.collection(ENTITIES).insertOne(newEntity, (err, doc) => {
+        getDatabase(req).collection(ENTITIES).insertOne(newEntity, (err, doc) => {
             if (err) {
                 handleError(res, err.message, "Failed to create new entity.");
             } else {
@@ -107,7 +103,7 @@ app.post("/api/entities", (req, res) => {
 });
 
 app.get("/api/entities/:id", (req, res) => {
-    dbTest.collection(ENTITIES).findOne({_id: new ObjectID(req.params.id)}, (err, doc) => {
+    getDatabase(req).collection(ENTITIES).findOne({_id: new ObjectID(req.params.id)}, (err, doc) => {
         if (err) {
             handleError(res, err.message, "Failed to get entity");
         } else {
@@ -120,7 +116,7 @@ app.put("/api/entities/:id", (req, res) => {
     const updateDoc = req.body;
     delete updateDoc._id;
 
-    dbTest.collection(ENTITIES).updateOne({_id: new ObjectID(req.params.id)}, updateDoc, function (err) {
+    getDatabase(req).collection(ENTITIES).updateOne({_id: new ObjectID(req.params.id)}, updateDoc, function (err) {
         if (err) {
             handleError(res, err.message, "Failed to update entity");
         } else {
@@ -131,7 +127,7 @@ app.put("/api/entities/:id", (req, res) => {
 });
 
 app.delete("/api/entities/:id", (req, res) => {
-    dbTest.collection(ENTITIES).deleteOne({_id: new ObjectID(req.params.id)}, function (err) {
+    getDatabase(req).collection(ENTITIES).deleteOne({_id: new ObjectID(req.params.id)}, function (err) {
         if (err) {
             handleError(res, err.message, "Failed to delete entity");
         } else {
@@ -141,7 +137,7 @@ app.delete("/api/entities/:id", (req, res) => {
 });
 
 app.get("/api/squares", function (req, res) {
-    dbTest.collection(SQUARES).find({}).toArray((err, docs) => {
+    getDatabase(req).collection(SQUARES).find({}).toArray((err, docs) => {
         if (err) {
             handleError(res, err.message, "Failed to fetch squares.");
         } else {
@@ -157,7 +153,7 @@ app.post("/api/squares", (req, res) => {
     if (!req.body) {
         handleError(res, "Invalid request", "Must provide data.", 400);
     } else {
-        dbTest.collection(SQUARES).insertOne(newSquare, (err, doc) => {
+        getDatabase(req).collection(SQUARES).insertOne(newSquare, (err, doc) => {
             if (err) {
                 handleError(res, err.message, "Failed to create new square.");
             } else {
@@ -171,7 +167,7 @@ app.put("/api/squares/:id", (req, res) => {
     const updateDoc = req.body;
     delete updateDoc._id;
 
-    dbTest.collection(SQUARES).updateOne({_id: new ObjectID(req.params.id)}, updateDoc, err => {
+    getDatabase(req).collection(SQUARES).updateOne({_id: new ObjectID(req.params.id)}, updateDoc, err => {
         if (err) {
             handleError(res, err.message, "Failed to update entity");
         } else {
@@ -182,11 +178,11 @@ app.put("/api/squares/:id", (req, res) => {
 });
 
 app.delete("/api/squares/:id", (req, res) => {
-    dbTest.collection(SQUARES).deleteOne({_id: new ObjectID(req.params.id)}, function(err) {
-    if (err) {
-      handleError(res, err.message, "Failed to delete entity");
-    } else {
-      res.status(200).json(req.params.id);
-    }
-  });
+    getDatabase(req).collection(SQUARES).deleteOne({_id: new ObjectID(req.params.id)}, function (err) {
+        if (err) {
+            handleError(res, err.message, "Failed to delete entity");
+        } else {
+            res.status(200).json(req.params.id);
+        }
+    });
 });
