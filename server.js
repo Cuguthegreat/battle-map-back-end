@@ -49,6 +49,7 @@ const connectWithDatabase = uri => {
         const env = uri.split('/').pop();
 
         database = client.db();
+        console.log(database)
         console.log(`Database connection on ${env} ready`);
 
         setupSocketIO({
@@ -57,7 +58,7 @@ const connectWithDatabase = uri => {
             squaresChangeStream: client.db(env).collection('squares').watch()
         });
     });
-
+console.log(database)
     return database;
 };
 
