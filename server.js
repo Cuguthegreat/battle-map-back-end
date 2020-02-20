@@ -65,6 +65,11 @@ const handleError = (res, reason, message, code) => {
     res.status(code || 500).json({"error": message});
 };
 
+console.log(dbDev)
+console.log(dbTest)
+console.log(dbDev.collection(ENTITIES))
+console.log(dbTest.collection(ENTITIES))
+
 app.get("/api/entities", (req, res) => {
     const queryObject = url.parse(req.url, true).query;
 
