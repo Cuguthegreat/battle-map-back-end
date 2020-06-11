@@ -40,7 +40,9 @@ const getEntities = collectionName => (req, res) => {
     const queryObject = url.parse(req.url, true).query;
     const query = {
         ...(queryObject.boardId && {boardId: queryObject.boardId}),
-        ...(queryObject.changedSince && {changeDate: { $gte: new Date(queryObject.changedSince)}})
+        ...(queryObject.changedSince ?
+            {changeDate: {$gte: new Date(queryObject.changedSince)}} :
+            {deleted: {$exists: false}})
     };
 
     database.collection(collectionName).find(query).toArray()
