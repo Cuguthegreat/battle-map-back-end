@@ -14,7 +14,7 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const uri = 'mongodb+srv://dbUser:dbUserPassword@cluster0.udc2e.mongodb.net/myFirstDatabase?retryWrites=true&w=majority'
+const uri = 'mongodb+srv://dbUser:dbUserPassword@cluster0.udc2e.mongodb.net/prod?retryWrites=true&w=majority'
 
 const server = app.listen(process.env.PORT || 8080, () => {
     console.log('App now running on port', server.address().port);
